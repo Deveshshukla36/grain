@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>GRAIN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Karla:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   BASE
+═══════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+
+:root{
+  --bg:#f4f2ee;
+  --fg:#0d0d0d;
+  --mid:#888;
+  --border:rgba(13,13,13,.15);
+  --serif:'Cormorant',Georgia,serif;
+  --sans:'Karla','Helvetica Neue',sans-serif;
+  --nav-h:56px;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+[data-dark]{
+  --bg:#0d0d0d;
+  --fg:#f4f2ee;
+  --mid:#666;
+  --border:rgba(244,242,238,.12);
+}
+
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:13px;font-weight:300;
+  letter-spacing:.03em;min-height:100vh;
+  overflow-x:hidden;
+  transition:background .3s,color .3s;
+}
+
+/* film grain */
+body::after{
+  content:'';position:fixed;inset:0;z-index:9000;pointer-events:none;
+  opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23f)'/%3E%3C/svg%3E");
+  background-size:180px;
+}
+
+img{display:block;max-width:100%}
+button,input,textarea,select{font-family:var(--sans);font-size:13px}
+button{cursor:pointer;background:none;border:none;color:var(--fg);padding:0}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════ */
+::-webkit-scrollbar{width:2px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--mid)}
+
+/* ═══════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════ */
+#topbar{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  height:var(--nav-h);
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  transition:background .3s,border-color .3s;
+}
+#logo{
+  font-family:var(--serif);font-size:26px;font-weight:600;
+  letter-spacing:.28em;text-transform:uppercase;
+  cursor:pointer;user-select:none;
+  position:absolute;left:50%;transform:translateX(-50%);
+}
+.top-left,.top-right{display:flex;align-items:center;gap:18px;z-index:1}
+.icon-btn{
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;transition:opacity .18s;
+}
+.icon-btn:hover{opacity:.45}
+#dark-toggle{font-size:13px;letter-spacing:.12em;font-weight:400}
+#post-btn{
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:500;
+  border:1px solid var(--fg);padding:7px 16px;
+  transition:background .18s,color .18s,border-color .3s;
+}
+#post-btn:hover{background:var(--fg);color:var(--bg)}
+
+/* hamburger */
+#ham{flex-direction:column;gap:5px;width:36px;height:36px;justify-content:center;align-items:center}
+.ham-line{
+  width:22px;height:1px;background:var(--fg);
+  transition:transform .28s var(--ease),opacity .18s,background .3s;
+  transform-origin:center;
+}
+body.menu-open .ham-line:nth-child(1){transform:translateY(6px) rotate(45deg)}
+body.menu-open .ham-line:nth-child(2){opacity:0}
+body.menu-open .ham-line:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+
+/* ═══════════════════════════════════════════
+   SLIDE MENU  (siemprericc style)
+═══════════════════════════════════════════ */
+#sidemenu{
+  position:fixed;top:0;right:0;bottom:0;z-index:600;
+  width:min(320px,85vw);
+  background:var(--fg);color:var(--bg);
+  transform:translateX(100%);
+  transition:transform .38s var(--ease);
+  display:flex;flex-direction:column;
+  padding:80px 40px 40px;
+  overflow-y:auto;
+}
+body.menu-open #sidemenu{transform:translateX(0)}
+#menu-overlay{
+  display:none;position:fixed;inset:0;z-index:550;
+  background:rgba(13,13,13,.5);
+}
+body.menu-open #menu-overlay{display:block}
+
+.menu-section-title{
+  font-size:9px;letter-spacing:.24em;text-transform:uppercase;
+  color:rgba(244,242,238,.38);margin-bottom:12px;margin-top:28px;
+}
+.menu-item{
+  display:block;font-family:var(--serif);font-size:30px;font-weight:300;font-style:italic;
+  color:var(--bg);padding:4px 0;
+  transition:opacity .18s;letter-spacing:.02em;
+  border:none;background:none;text-align:left;width:100%;
+}
+.menu-item:hover{opacity:.5}
+.menu-item.active{font-style:normal;font-weight:600}
+.menu-close{
+  position:absolute;top:20px;right:20px;
+  width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  color:var(--bg);font-size:20px;opacity:.6;
+}
+.menu-close:hover{opacity:1}
+.menu-user{
+  font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(244,242,238,.5);margin-top:auto;padding-top:28px;
+  border-top:1px solid rgba(244,242,238,.15);
+}
+.menu-signout{
+  display:inline-block;margin-top:10px;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bg);opacity:.55;
+  border:1px solid rgba(244,242,238,.3);padding:5px 12px;
+  transition:opacity .18s;
+}
+.menu-signout:hover{opacity:1}
+
+/* ═══════════════════════════════════════════
+   AUTH PAGE
+═══════════════════════════════════════════ */
+#page-auth{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+.auth-inner{width:100%;max-width:340px}
+.auth-wordmark{
+  font-family:var(--serif);font-size:80px;font-weight:300;font-style:italic;
+  text-align:center;line-height:.9;letter-spacing:.06em;
+  margin-bottom:6px;
+}
+.auth-sub{
+  text-align:center;font-size:10px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--mid);margin-bottom:52px;
+  transition:color .3s;
+}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:30px;transition:border-color .3s}
+.atab{
+  flex:1;padding:11px;text-align:center;
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:400;
+  color:var(--mid);border-bottom:1.5px solid transparent;margin-bottom:-1px;
+  transition:color .18s,border-color .18s;
+}
+.atab.on{color:var(--fg);border-bottom-color:var(--fg)}
+.aform{display:none;flex-direction:column;gap:18px}
+.aform.on{display:flex}
+.fg{display:flex;flex-direction:column;gap:6px}
+.fg label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--mid);transition:color .3s}
+.fg input{
+  border:none;border-bottom:1px solid var(--border);
+  padding:10px 0;background:transparent;color:var(--fg);
+  font-size:15px;outline:none;width:100%;
+  transition:border-color .18s,color .3s;
+}
+.fg input:focus{border-bottom-color:var(--fg)}
+.err-msg{font-size:11px;color:#c0392b;letter-spacing:.04em;display:none;padding:2px 0}
+.auth-btn{
+  width:100%;border:1px solid var(--fg);padding:13px;
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:400;
+  color:var(--fg);background:transparent;
+  transition:background .18s,color .18s,border-color .3s;
+  margin-top:4px;
+}
+.auth-btn:hover,.auth-btn:active{background:var(--fg);color:var(--bg)}
+
+/* ═══════════════════════════════════════════
+   PAGES  (routed content)
+═══════════════════════════════════════════ */
+.page{display:none;padding-top:var(--nav-h);min-height:100vh}
+.page.on{display:block;animation:fadeIn .22s var(--ease) both}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* page header */
+.phead{
+  padding:36px 24px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-end;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+  transition:border-color .3s;
+}
+.phead-title{
+  font-family:var(--serif);font-size:clamp(36px,8vw,58px);
+  font-weight:300;font-style:italic;line-height:1;
+}
+.phead-sub{font-size:11px;color:var(--mid);letter-spacing:.1em;margin-top:6px;transition:color .3s}
+
+/* view toggle (list/grid) */
+.view-toggle{display:flex;gap:4px}
+.vt-btn{
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:400;
+  border:1px solid var(--border);padding:6px 12px;color:var(--mid);
+  transition:background .15s,color .15s,border-color .3s;
+}
+.vt-btn.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+/* ═══════════════════════════════════════════
+   PHOTO GRIDS
+═══════════════════════════════════════════ */
+/* GRID MODE */
+.photo-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(280px,45vw),1fr));
+  gap:1px;background:var(--border);
+}
+.photo-grid.list-mode{grid-template-columns:1fr;background:transparent;gap:0}
+
+/* card */
+.pcard{position:relative;overflow:hidden;cursor:pointer;background:var(--bg);transition:background .3s}
+.pcard-ratio{padding-bottom:100%;position:relative}
+.list-mode .pcard-ratio{padding-bottom:56%;} 
+.pcard-img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;
+  transition:transform .55s var(--ease),filter .3s;
+  filter:grayscale(5%);
+}
+.pcard:hover .pcard-img{transform:scale(1.04)}
+.list-mode .pcard{border-bottom:1px solid var(--border)}
+
+/* overlay */
+.pcard-ov{
+  position:absolute;inset:0;
+  background:linear-gradient(to top,rgba(13,13,13,.9) 0%,rgba(13,13,13,.2) 45%,transparent 75%);
+  color:#f4f2ee;padding:20px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  opacity:0;transition:opacity .28s var(--ease);
+}
+.pcard:hover .pcard-ov{opacity:1}
+@media(hover:none){.pcard-ov{opacity:1;background:linear-gradient(to top,rgba(13,13,13,.78) 0%,transparent 55%)}}
+
+.pcard-user{font-size:9px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:4px;opacity:.65}
+.pcard-cap{
+  font-family:var(--serif);font-size:18px;font-style:italic;font-weight:300;
+  line-height:1.35;margin-bottom:10px;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+.pcard-foot{display:flex;justify-content:space-between;font-size:10px;opacity:.55}
+
+/* LIST card extra info */
+.list-mode .pcard-ov{flex-direction:row;align-items:flex-end;justify-content:space-between}
+.list-mode .pcard-cap{-webkit-line-clamp:1;font-size:22px}
+.list-mode .pcard-foot{flex-direction:column;align-items:flex-end;gap:2px}
+
+/* ═══════════════════════════════════════════
+   TRENDING
+═══════════════════════════════════════════ */
+.trend-list{display:flex;flex-direction:column}
+.trend-item{
+  display:flex;align-items:stretch;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;background:var(--bg);
+  transition:background .18s,border-color .3s;
+  min-height:100px;
+}
+.trend-item:hover{background:var(--fg)}
+.trend-item:hover .trend-title,.trend-item:hover .trend-user,.trend-item:hover .trend-meta{color:var(--bg)}
+.trend-rank{
+  width:70px;min-width:70px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:44px;font-weight:300;font-style:italic;
+  border-right:1px solid var(--border);color:var(--mid);
+  transition:color .18s,border-color .3s;
+}
+.trend-item:hover .trend-rank{color:rgba(244,242,238,.3);border-right-color:rgba(244,242,238,.15)}
+.trend-thumb{
+  width:100px;min-width:100px;overflow:hidden;
+}
+.trend-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .48s var(--ease)}
+.trend-item:hover .trend-thumb img{transform:scale(1.05)}
+.trend-body{flex:1;padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.trend-user{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);transition:color .18s}
+.trend-title{font-family:var(--serif);font-size:clamp(18px,3.5vw,26px);font-style:italic;font-weight:300;transition:color .18s;line-height:1.2}
+.trend-meta{font-size:11px;color:var(--mid);letter-spacing:.06em;transition:color .18s}
+.trend-likes{
+  display:flex;align-items:center;justify-content:center;
+  padding:0 20px;font-size:13px;
+  color:var(--mid);transition:color .18s;
+  flex-shrink:0;
+}
+.trend-item:hover .trend-likes{color:rgba(244,242,238,.5)}
+
+/* ═══════════════════════════════════════════
+   PROFILE
+═══════════════════════════════════════════ */
+.prof-banner{
+  padding:40px 24px 30px;
+  border-bottom:1px solid var(--border);
+  transition:border-color .3s;
+}
+.prof-av{
+  width:68px;height:68px;border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:30px;font-weight:300;
+  text-transform:uppercase;margin-bottom:16px;
+  transition:border-color .3s;
+}
+.prof-name{font-family:var(--serif);font-size:clamp(30px,7vw,48px);font-weight:300;font-style:italic;margin-bottom:6px}
+.prof-bio{font-size:13px;color:var(--mid);line-height:1.6;margin-bottom:20px;max-width:480px;transition:color .3s}
+.prof-stats{display:flex;gap:32px;margin-bottom:18px}
+.pstat-n{font-family:var(--serif);font-size:30px;font-weight:300;display:block;line-height:1}
+.pstat-l{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);transition:color .3s}
+.prof-tabs{display:flex;border-bottom:1px solid var(--border);transition:border-color .3s}
+.ptab{
+  padding:14px 24px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:400;
+  color:var(--mid);border-bottom:1.5px solid transparent;margin-bottom:-1px;
+  transition:color .18s,border-color .18s;
+}
+.ptab.on{color:var(--fg);border-bottom-color:var(--fg)}
+
+/* ═══════════════════════════════════════════
+   GROUPS
+═══════════════════════════════════════════ */
+.groups-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));
+  gap:1px;background:var(--border);
+}
+.gcard{
+  background:var(--bg);padding:28px 24px;
+  text-align:left;border:none;width:100%;
+  transition:background .18s,color .18s,border-color .3s;
+}
+.gcard:hover{background:var(--fg);color:var(--bg)}
+.gcard-name{
+  font-family:var(--serif);font-size:26px;font-weight:300;font-style:italic;
+  margin-bottom:8px;line-height:1.2;
+}
+.gcard-meta{font-size:11px;color:var(--mid);letter-spacing:.05em;transition:color .18s}
+.gcard:hover .gcard-meta{color:rgba(244,242,238,.45)}
+
+/* group detail back */
+.back-bar{
+  padding:14px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  transition:border-color .3s;
+}
+.back-link{
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mid);transition:color .18s;
+}
+.back-link:hover{color:var(--fg)}
+
+/* ═══════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════ */
+.modal-bg{
+  display:none;position:fixed;inset:0;z-index:800;
+  background:rgba(13,13,13,.88);
+  align-items:center;justify-content:center;
+  padding:16px;
+  overflow-y:auto;
+}
+.modal-bg.on{display:flex}
+.modal-box{
+  background:var(--bg);color:var(--fg);
+  position:relative;width:100%;
+  max-height:calc(100vh - 32px);overflow-y:auto;
+  transition:background .3s,color .3s;
+}
+.modal-x{
+  position:absolute;top:14px;right:14px;z-index:5;
+  width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:300;
+  transition:opacity .18s;
+}
+.modal-x:hover{opacity:.4}
+
+/* photo viewer */
+#modal-photo .modal-box{max-width:960px}
+.pm-layout{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:640px){.pm-layout{grid-template-columns:1fr}}
+.pm-imgside img{
+  width:100%;max-height:88vh;
+  object-fit:cover;display:block;
+}
+.pm-imgside{border-right:1px solid var(--border);transition:border-color .3s}
+.pm-info{padding:28px 28px 24px;display:flex;flex-direction:column;gap:14px;min-height:280px}
+.pm-who{
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  border-bottom:1px solid var(--border);padding-bottom:14px;
+  cursor:pointer;transition:color .18s,border-color .3s;
+}
+.pm-who:hover{color:var(--mid)}
+.pm-caption{
+  font-family:var(--serif);font-size:clamp(20px,4vw,28px);
+  font-style:italic;font-weight:300;line-height:1.4;flex:1;
+}
+.pm-detail{font-size:12px;color:var(--mid);letter-spacing:.04em;transition:color .3s}
+.pm-detail b{color:var(--fg);margin-right:6px;font-weight:400;transition:color .3s}
+.pm-actions{
+  display:flex;align-items:center;gap:14px;
+  border-top:1px solid var(--border);padding-top:14px;
+  transition:border-color .3s;
+}
+.like-btn{
+  border:1px solid var(--fg);padding:8px 20px;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:400;
+  color:var(--fg);background:none;
+  transition:background .18s,color .18s,border-color .3s;
+}
+.like-btn:hover,.like-btn.liked{background:var(--fg);color:var(--bg)}
+.like-ct{font-size:12px;color:var(--mid);letter-spacing:.05em;transition:color .3s}
+
+/* upload modal */
+#modal-upload .modal-box{max-width:460px;padding:36px}
+.modal-title{
+  font-family:var(--serif);font-size:34px;font-weight:300;font-style:italic;
+  margin-bottom:24px;
+}
+.preview-zone{
+  border:1px solid var(--border);margin-bottom:16px;overflow:hidden;
+  transition:border-color .3s;
+}
+.preview-zone-inner{
+  padding-bottom:80%;position:relative;
+  background:rgba(13,13,13,.04);
+}
+.preview-zone-inner img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.preview-zone-ph{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;color:var(--mid);
+}
+.preview-zone-ph span{font-size:38px;line-height:1}
+.preview-zone-ph small{font-size:9px;letter-spacing:.18em;text-transform:uppercase;transition:color .3s}
+.upload-src{display:flex;gap:8px;margin-bottom:22px}
+.src-btn{
+  flex:1;border:1px solid var(--border);padding:11px;
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:400;
+  color:var(--fg);transition:background .18s,color .18s,border-color .3s;
+}
+.src-btn:hover{background:var(--fg);color:var(--bg)}
+.upload-form{display:flex;flex-direction:column;gap:14px}
+.upload-form input,.upload-form textarea,.upload-form select{
+  width:100%;border:none;border-bottom:1px solid var(--border);
+  padding:10px 0;background:transparent;color:var(--fg);
+  font-size:14px;outline:none;
+  transition:border-color .18s,color .3s;
+}
+.upload-form input:focus,.upload-form textarea:focus,.upload-form select:focus{
+  border-bottom-color:var(--fg);
+}
+.upload-form textarea{resize:vertical;min-height:64px}
+.upload-form select option{background:var(--bg)}
+.upload-form label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--mid);transition:color .3s}
+.publish-btn{
+  width:100%;border:1px solid var(--fg);padding:13px;
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:400;
+  color:var(--fg);background:transparent;
+  transition:background .18s,color .18s,border-color .3s;margin-top:4px;
+}
+.publish-btn:hover,.publish-btn:active{background:var(--fg);color:var(--bg)}
+
+/* group/member modals */
+#modal-group .modal-box,#modal-members .modal-box{max-width:380px;padding:36px}
+.modal-form{display:flex;flex-direction:column;gap:14px}
+.modal-form input,.modal-form textarea{
+  width:100%;border:none;border-bottom:1px solid var(--border);
+  padding:10px 0;background:transparent;color:var(--fg);
+  font-size:14px;outline:none;transition:border-color .18s,color .3s;
+}
+.modal-form input:focus,.modal-form textarea:focus{border-bottom-color:var(--fg)}
+.modal-form textarea{resize:vertical;min-height:60px}
+.modal-form label{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--mid);transition:color .3s}
+.modal-submit{
+  width:100%;border:1px solid var(--fg);padding:13px;
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--fg);background:transparent;
+  transition:background .18s,color .18s,border-color .3s;
+}
+.modal-submit:hover{background:var(--fg);color:var(--bg)}
+
+/* members list */
+.mem-list{display:flex;flex-direction:column;margin-bottom:20px;max-height:260px;overflow-y:auto}
+.mem-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 0;border-bottom:1px solid var(--border);
+  transition:border-color .3s;
+}
+.mem-name{font-size:12px;letter-spacing:.05em}
+.mem-tag{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);margin-left:6px}
+.mem-remove{
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  border:1px solid var(--border);padding:4px 10px;color:var(--mid);
+  transition:background .15s,color .15s,border-color .3s;
+}
+.mem-remove:hover{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.invite-row{display:flex;gap:8px}
+.invite-row input{
+  flex:1;border:none;border-bottom:1px solid var(--border);
+  padding:10px 0;background:transparent;color:var(--fg);
+  font-size:14px;outline:none;transition:border-color .18s,color .3s;
+}
+.invite-row input:focus{border-bottom-color:var(--fg)}
+.invite-btn{
+  border:1px solid var(--fg);padding:8px 16px;
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--fg);transition:background .15s,color .15s,border-color .3s;
+}
+.invite-btn:hover{background:var(--fg);color:var(--bg)}
+
+/* ═══════════════════════════════════════════
+   EMPTY / LOADING STATES
+═══════════════════════════════════════════ */
+.empty-state{
+  padding:80px 24px;text-align:center;
+}
+.empty-state h2{
+  font-family:var(--serif);font-size:40px;font-weight:300;font-style:italic;
+  margin-bottom:8px;
+}
+.empty-state p{font-size:12px;color:var(--mid);letter-spacing:.08em;transition:color .3s}
+.loading-state{
+  padding:80px 24px;text-align:center;
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mid);
+  transition:color .3s;
+}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+#toast{
+  position:fixed;bottom:28px;left:50%;z-index:9500;
+  background:var(--fg);color:var(--bg);
+  padding:12px 26px;font-size:11px;letter-spacing:.08em;
+  pointer-events:none;white-space:nowrap;
+  transform:translateX(-50%) translateY(120%);
+  transition:transform .32s var(--ease),background .3s,color .3s;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ═══════════════════════════════════════════
+   MISC UTILS
+═══════════════════════════════════════════ */
+.row{display:flex;align-items:center;gap:10px}
+.spacer{flex:1}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<!-- ─────────── TOPBAR ─────────── -->
+<header id="topbar">
+  <div class="top-left">
+    <button class="icon-btn" id="ham" aria-label="Menu">
+      <span class="ham-line"></span>
+      <span class="ham-line"></span>
+      <span class="ham-line"></span>
+    </button>
+    <button id="dark-toggle" class="icon-btn" title="Toggle dark mode">◑</button>
+  </div>
+
+  <div id="logo">GRAIN</div>
+
+  <div class="top-right">
+    <button id="post-btn" class="hidden">+ Post</button>
+  </div>
+</header>
+
+<!-- ─────────── SLIDE MENU ─────────── -->
+<div id="menu-overlay"></div>
+<nav id="sidemenu">
+  <button class="menu-close" id="menu-close">✕</button>
+
+  <div class="menu-section-title">Navigate</div>
+  <button class="menu-item" data-nav="feed">Feed</button>
+  <button class="menu-item" data-nav="trending">Trending</button>
+  <button class="menu-item" data-nav="groups">Groups</button>
+  <button class="menu-item" data-nav="profile">Profile</button>
+
+  <div class="menu-user" id="menu-user-info">
+    <div id="menu-username"></div>
+    <button class="menu-signout" id="menu-signout">Sign Out</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     AUTH PAGE
+═══════════════════════════════════════════ -->
+<div id="page-auth">
+  <div class="auth-inner">
+    <div class="auth-wordmark">Grain</div>
+    <div class="auth-sub">Photography Community</div>
+
+    <div class="auth-tabs">
+      <button class="atab on" id="tab-in">Sign In</button>
+      <button class="atab"    id="tab-up">Join</button>
+    </div>
+
+    <!-- sign in -->
+    <div class="aform on" id="form-in">
+      <div class="err-msg" id="in-err"></div>
+      <div class="fg">
+        <label>Username</label>
+        <input id="in-user" type="text" autocomplete="username" placeholder="your username" autocapitalize="none">
+      </div>
+      <div class="fg">
+        <label>Password</label>
+        <input id="in-pass" type="password" autocomplete="current-password">
+      </div>
+      <button class="auth-btn" id="btn-login">Enter →</button>
+    </div>
+
+    <!-- register -->
+    <div class="aform" id="form-up">
+      <div class="err-msg" id="up-err"></div>
+      <div class="fg">
+        <label>Username</label>
+        <input id="up-user" type="text" autocomplete="username" placeholder="lowercase, no spaces" autocapitalize="none">
+      </div>
+      <div class="fg">
+        <label>Password</label>
+        <input id="up-pass" type="password" autocomplete="new-password" placeholder="min 4 characters">
+      </div>
+      <button class="auth-btn" id="btn-reg">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FEED PAGE
+═══════════════════════════════════════════ -->
+<div class="page hidden" id="page-feed">
+  <div class="phead">
+    <div>
+      <div class="phead-title">Feed</div>
+      <div class="phead-sub" id="feed-sub">Global photographs</div>
+    </div>
+    <div class="view-toggle">
+      <button class="vt-btn on" data-layout="grid">Grid</button>
+      <button class="vt-btn"    data-layout="list">List</button>
+    </div>
+  </div>
+  <div class="photo-grid" id="feed-grid"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TRENDING PAGE
+═══════════════════════════════════════════ -->
+<div class="page hidden" id="page-trending">
+  <div class="phead">
+    <div>
+      <div class="phead-title">Trending</div>
+      <div class="phead-sub">Most loved photographs</div>
+    </div>
+  </div>
+  <div class="trend-list" id="trend-list"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PROFILE PAGE
+═══════════════════════════════════════════ -->
+<div class="page hidden" id="page-profile">
+  <div class="prof-banner" id="prof-banner"></div>
+  <div class="prof-tabs" id="prof-tabs">
+    <button class="ptab on" data-pt="posted">Posted</button>
+    <button class="ptab"    data-pt="liked">Liked</button>
+  </div>
+  <div class="photo-grid" id="prof-grid"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     GROUPS PAGE
+═══════════════════════════════════════════ -->
+<div class="page hidden" id="page-groups">
+  <div class="phead">
+    <div class="phead-title">Groups</div>
+    <button class="vt-btn" id="btn-new-group">+ New</button>
+  </div>
+  <div class="groups-grid" id="groups-grid"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     GROUP DETAIL PAGE
+═══════════════════════════════════════════ -->
+<div class="page hidden" id="page-gd">
+  <div class="back-bar">
+    <button class="back-link" id="btn-back">← Groups</button>
+  </div>
+  <div class="phead">
+    <div>
+      <div class="phead-title" id="gd-title"></div>
+      <div class="phead-sub"   id="gd-sub"></div>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="vt-btn" id="btn-gd-members">Members</button>
+      <button class="vt-btn" id="btn-gd-join"></button>
+    </div>
+  </div>
+  <div class="photo-grid" id="gd-grid"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     MODALS
+═══════════════════════════════════════════ -->
+
+<!-- Photo Viewer -->
+<div class="modal-bg" id="modal-photo">
+  <div class="modal-box">
+    <button class="modal-x" data-close="modal-photo">✕</button>
+    <div class="pm-layout">
+      <div class="pm-imgside"><img id="pm-img" src="" alt=""></div>
+      <div class="pm-info">
+        <div class="pm-who" id="pm-who"></div>
+        <div class="pm-caption" id="pm-cap"></div>
+        <div class="pm-detail" id="pm-cam"></div>
+        <div class="pm-detail" id="pm-loc"></div>
+        <div class="pm-detail" id="pm-date"></div>
+        <div class="pm-actions">
+          <button class="like-btn" id="pm-like">♡ Like</button>
+          <span   class="like-ct"  id="pm-lct"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload -->
+<div class="modal-bg" id="modal-upload">
+  <div class="modal-box">
+    <button class="modal-x" data-close="modal-upload">✕</button>
+    <div class="modal-title">Share a Photograph</div>
+
+    <div class="preview-zone">
+      <div class="preview-zone-inner" id="prev-inner">
+        <div class="preview-zone-ph" id="prev-ph">
+          <span>◎</span>
+          <small>Select an image</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="upload-src">
+      <label class="src-btn">
+        Gallery
+        <input type="file" accept="image/*" id="u-file" style="display:none">
+      </label>
+      <label class="src-btn">
+        Camera
+        <input type="file" accept="image/*" capture="camera" id="u-cam-file" style="display:none">
+      </label>
+    </div>
+
+    <div class="upload-form">
+      <div class="fg"><label>Caption</label><textarea id="u-cap" placeholder="Describe this moment…"></textarea></div>
+      <div class="fg"><label>Camera Used</label><input id="u-cam" type="text" placeholder="e.g. Fujifilm X-T5, Sony A7IV"></div>
+      <div class="fg"><label>Location</label><input id="u-loc" type="text" placeholder="Where was this taken?"></div>
+      <div class="fg"><label>Post to Group (optional)</label><select id="u-grp"><option value="">— Global Feed Only —</option></select></div>
+      <button class="publish-btn" id="btn-publish">Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Group -->
+<div class="modal-bg" id="modal-group">
+  <div class="modal-box">
+    <button class="modal-x" data-close="modal-group">✕</button>
+    <div class="modal-title">New Group</div>
+    <div class="modal-form">
+      <div class="fg"><label>Name</label><input type="text" id="g-name" placeholder="Name your collective"></div>
+      <div class="fg"><label>Description</label><textarea id="g-desc" placeholder="What is this group about?"></textarea></div>
+      <button class="modal-submit" id="btn-create-group">Create Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Members -->
+<div class="modal-bg" id="modal-members">
+  <div class="modal-box">
+    <button class="modal-x" data-close="modal-members">✕</button>
+    <div class="modal-title" style="font-size:26px">Members</div>
+    <div class="mem-list" id="mem-list"></div>
+    <div class="fg" style="margin-bottom:12px"><label>Invite by Username</label></div>
+    <div class="invite-row">
+      <input type="text" id="invite-input" placeholder="username" autocapitalize="none">
+      <button class="invite-btn" id="btn-invite">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+
+<script>
+/* ══════════════════════════════════════════════
+   INDEXEDDB  — stores actual image data
+══════════════════════════════════════════════ */
+const IDB = (() => {
+  let db = null;
+  const DB_NAME = 'grain_v2', STORE = 'imgs', VER = 1;
+
+  function open() {
+    return new Promise((ok, fail) => {
+      const req = indexedDB.open(DB_NAME, VER);
+      req.onupgradeneeded = e => e.target.result.createObjectStore(STORE);
+      req.onsuccess = e => { db = e.target.result; ok(db); };
+      req.onerror   = () => fail(req.error);
+    });
+  }
+  function tx(mode) { return db.transaction(STORE, mode).objectStore(STORE); }
+  function put(key, val) {
+    return new Promise((ok, fail) => {
+      const r = tx('readwrite').put(val, key);
+      r.onsuccess = ok; r.onerror = fail;
+    });
+  }
+  function get(key) {
+    return new Promise((ok, fail) => {
+      const r = tx('readonly').get(key);
+      r.onsuccess = () => ok(r.result);
+      r.onerror   = fail;
+    });
+  }
+  return { open, put, get };
+})();
+
+/* ══════════════════════════════════════════════
+   LOCALSTORAGE DB — stores metadata (no images)
+══════════════════════════════════════════════ */
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch { return null } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+const users  = () => LS.get('gn_users')  || [];
+const photos = () => LS.get('gn_photos') || [];
+const groups = () => LS.get('gn_groups') || [];
+const saveUsers  = v => LS.set('gn_users',  v);
+const savePhotos = v => LS.set('gn_photos', v);
+const saveGroups = v => LS.set('gn_groups', v);
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+/* ══════════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════════ */
+let ME = null; // logged-in user object
+
+function refreshMe() {
+  if (!ME) return;
+  ME = users().find(u => u.id === ME.id) || ME;
+}
+
+function doLogin(username, password) {
+  username = username.trim().toLowerCase();
+  const u = users().find(u => u.username === username && u.password === password);
+  if (!u) throw new Error('Wrong username or password');
+  ME = u;
+  LS.set('gn_session', u.id);
+}
+
+function doRegister(username, password) {
+  username = username.trim().toLowerCase().replace(/[^a-z0-9_]/g,'');
+  if (!username) throw new Error('Invalid username — use letters, numbers or _');
+  if (password.length < 4) throw new Error('Password must be at least 4 characters');
+  const list = users();
+  if (list.find(u => u.username === username)) throw new Error('Username taken');
+  const u = { id: uid(), username, password, bio: '', joinedAt: Date.now(), likedPhotos: [] };
+  list.push(u);
+  saveUsers(list);
+  ME = u;
+  LS.set('gn_session', u.id);
+}
+
+function doSignOut() {
+  ME = null;
+  LS.set('gn_session', null);
+  showAuth();
+}
+
+/* ══════════════════════════════════════════════
+   IMAGE COMPRESSION
+══════════════════════════════════════════════ */
+function compress(file, maxPx = 1200, q = 0.82) {
+  return new Promise(res => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', q));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); res(null); };
+    img.src = url;
+  });
+}
+
+/* ══════════════════════════════════════════════
+   PHOTO OPS
+══════════════════════════════════════════════ */
+let pendingImgData = null;
+
+async function publishPhoto({ caption, camera, location, groupId }) {
+  if (!pendingImgData) throw new Error('No image selected');
+  const id = uid();
+  const ph = {
+    id, userId: ME.id, username: ME.username,
+    caption: caption || '',
+    camera:  camera  || '',
+    location:location || '',
+    groupId: groupId || null,
+    likes: [],
+    timestamp: Date.now(),
+  };
+  await IDB.put(id, pendingImgData);
+  const list = photos();
+  list.unshift(ph);
+  savePhotos(list);
+  return ph;
+}
+
+function toggleLike(photoId) {
+  refreshMe();
+  const list = photos();
+  const ph = list.find(p => p.id === photoId);
+  if (!ph) return false;
+  const had = ph.likes.includes(ME.id);
+  if (had) ph.likes = ph.likes.filter(id => id !== ME.id);
+  else      ph.likes.push(ME.id);
+  savePhotos(list);
+
+  const ul = users();
+  const mu = ul.find(u => u.id === ME.id);
+  if (mu) {
+    mu.likedPhotos = mu.likedPhotos || [];
+    if (had) mu.likedPhotos = mu.likedPhotos.filter(id => id !== photoId);
+    else     mu.likedPhotos.push(photoId);
+    saveUsers(ul);
+    ME = mu;
+  }
+  return !had;
+}
+
+/* ══════════════════════════════════════════════
+   GROUP OPS
+══════════════════════════════════════════════ */
+let activeGroupId = null;
+
+function makeGroup(name, desc) {
+  const g = { id: uid(), name, description: desc, creatorId: ME.id, members: [ME.id], timestamp: Date.now() };
+  const list = groups();
+  list.push(g);
+  saveGroups(list);
+  return g;
+}
+
+function toggleGroup(gid) {
+  const list = groups();
+  const g = list.find(g => g.id === gid);
+  if (!g) return;
+  const inIt = g.members.includes(ME.id);
+  if (inIt) g.members = g.members.filter(m => m !== ME.id);
+  else       g.members.push(ME.id);
+  saveGroups(list);
+  return !inIt;
+}
+
+function inviteUser(gid, username) {
+  username = username.trim().toLowerCase();
+  const u = users().find(u => u.username === username);
+  if (!u) throw new Error('User not found: @' + username);
+  const list = groups();
+  const g = list.find(g => g.id === gid);
+  if (g.members.includes(u.id)) throw new Error('@' + username + ' is already a member');
+  g.members.push(u.id);
+  saveGroups(list);
+}
+
+/* ══════════════════════════════════════════════
+   RENDER HELPERS
+══════════════════════════════════════════════ */
+async function renderPhotoGrid(container, photoList) {
+  if (!photoList.length) {
+    container.innerHTML = `<div class="empty-state"><h2>Nothing here yet</h2><p>Be the first to share a photograph</p></div>`;
+    return;
+  }
+  container.innerHTML = '<div class="loading-state">Loading…</div>';
+  const frag = document.createDocumentFragment();
+  let loaded = 0;
+  for (const p of photoList) {
+    let imgData;
+    try { imgData = await IDB.get(p.id); } catch(e) { continue; }
+    if (!imgData) continue;
+    const el = document.createElement('div');
+    el.className = 'pcard';
+    el.innerHTML = `
+      <div class="pcard-ratio">
+        <img class="pcard-img" src="${imgData}" alt="${esc(p.caption)}" loading="lazy">
+        <div class="pcard-ov">
+          <div class="pcard-user">@${esc(p.username)}</div>
+          <div class="pcard-cap">${esc(p.caption || 'Untitled')}</div>
+          <div class="pcard-foot">
+            <span>${esc(p.camera)}</span>
+            <span>♥ ${p.likes.length}</span>
+          </div>
+        </div>
+      </div>`;
+    el.addEventListener('click', () => openPhoto(p.id));
+    frag.appendChild(el);
+    loaded++;
+  }
+  container.innerHTML = '';
+  if (!loaded) {
+    container.innerHTML = `<div class="empty-state"><h2>Nothing here yet</h2><p>Photos will appear here</p></div>`;
+    return;
+  }
+  container.appendChild(frag);
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════════
+   ROUTING / VIEW SWITCHING
+══════════════════════════════════════════════ */
+let currentPage = null;
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.add('hidden');
+    p.classList.remove('on');
+  });
+  const el = document.getElementById('page-' + id);
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.classList.add('on');
+  currentPage = id;
+  // sync menu active state
+  document.querySelectorAll('.menu-item[data-nav]').forEach(b => {
+    b.classList.toggle('active', b.dataset.nav === id);
+  });
+  window.scrollTo(0, 0);
+  closeMenu();
+}
+
+function showAuth() {
+  document.getElementById('page-auth').style.display = 'flex';
+  document.querySelectorAll('.page').forEach(p => { p.classList.add('hidden'); p.classList.remove('on'); });
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('post-btn').classList.add('hidden');
+}
+
+function enterApp() {
+  document.getElementById('page-auth').style.display = 'none';
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('post-btn').classList.remove('hidden');
+  document.getElementById('menu-username').textContent = '@' + ME.username;
+  loadFeed();
+}
+
+/* ══════════════════════════════════════════════
+   FEED
+══════════════════════════════════════════════ */
+let feedLayout = 'grid';
+
+async function loadFeed() {
+  showPage('feed');
+  const grid = document.getElementById('feed-grid');
+  const list = photos().sort((a,b) => b.timestamp - a.timestamp);
+  document.getElementById('feed-sub').textContent = list.length + ' photograph' + (list.length !== 1 ? 's' : '');
+  await renderPhotoGrid(grid, list);
+}
+
+/* ══════════════════════════════════════════════
+   TRENDING
+══════════════════════════════════════════════ */
+async function loadTrending() {
+  showPage('trending');
+  const container = document.getElementById('trend-list');
+  container.innerHTML = '<div class="loading-state">Loading…</div>';
+  const list = photos().filter(p => p.likes.length > 0).sort((a,b) => b.likes.length - a.likes.length);
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><h2>Nothing trending yet</h2><p>Like photos in the feed to see them here</p></div>`;
+    return;
+  }
+  container.innerHTML = '';
+  let rank = 1;
+  for (const p of list.slice(0, 30)) {
+    let imgData;
+    try { imgData = await IDB.get(p.id); } catch(e) { rank++; continue; }
+    if (!imgData) { rank++; continue; }
+    const el = document.createElement('div');
+    el.className = 'trend-item';
+    el.innerHTML = `
+      <div class="trend-rank">${rank}</div>
+      <div class="trend-thumb"><img src="${imgData}" alt="${esc(p.caption)}" loading="lazy"></div>
+      <div class="trend-body">
+        <div class="trend-user">@${esc(p.username)}</div>
+        <div class="trend-title">${esc(p.caption || 'Untitled')}</div>
+        <div class="trend-meta">${p.camera ? esc(p.camera) : ''} ${p.location ? '· ' + esc(p.location) : ''}</div>
+      </div>
+      <div class="trend-likes">♥ ${p.likes.length}</div>`;
+    el.addEventListener('click', () => openPhoto(p.id));
+    container.appendChild(el);
+    rank++;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   PROFILE
+══════════════════════════════════════════════ */
+let profTab = 'posted';
+
+async function loadProfile(userId) {
+  showPage('profile');
+  const tid = userId || ME.id;
+  const ul = users();
+  const ud = ul.find(u => u.id === tid) || ME;
+
+  const all = photos();
+  const posted = all.filter(p => p.userId === tid).sort((a,b) => b.timestamp - a.timestamp);
+  const liked  = all.filter(p => p.likes.includes(tid));
+
+  document.getElementById('prof-banner').innerHTML = `
+    <div class="prof-av">${ud.username[0].toUpperCase()}</div>
+    <div class="prof-name">@${esc(ud.username)}</div>
+    <div class="prof-bio">${esc(ud.bio || '')}</div>
+    <div class="prof-stats">
+      <div><span class="pstat-n">${posted.length}</span><span class="pstat-l">Photos</span></div>
+      <div><span class="pstat-n">${liked.length}</span><span class="pstat-l">Liked</span></div>
+    </div>
+    ${tid === ME.id ? `<button class="vt-btn" id="btn-edit-bio" style="margin-top:14px">Edit Bio</button>` : ''}
+  `;
+
+  if (tid === ME.id) {
+    document.getElementById('btn-edit-bio').addEventListener('click', () => {
+      const bio = prompt('Your bio (max 140 chars):', ud.bio || '');
+      if (bio === null) return;
+      const ul2 = users();
+      const mu = ul2.find(u => u.id === ME.id);
+      mu.bio = bio.slice(0, 140);
+      saveUsers(ul2);
+      ME = mu;
+      loadProfile();
+    });
+  }
+
+  const grid = document.getElementById('prof-grid');
+  await renderPhotoGrid(grid, profTab === 'posted' ? posted : liked);
+}
+
+/* ══════════════════════════════════════════════
+   GROUPS
+══════════════════════════════════════════════ */
+function loadGroups() {
+  showPage('groups');
+  const container = document.getElementById('groups-grid');
+  const list = groups();
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><h2>No groups yet</h2><p>Create the first collective</p></div>`;
+    return;
+  }
+  container.innerHTML = '';
+  list.forEach(g => {
+    const el = document.createElement('button');
+    el.className = 'gcard';
+    el.innerHTML = `<div class="gcard-name">${esc(g.name)}</div><div class="gcard-meta">${g.members.length} member${g.members.length !== 1 ? 's' : ''} · ${esc(g.description)}</div>`;
+    el.addEventListener('click', () => loadGroupDetail(g.id));
+    container.appendChild(el);
+  });
+}
+
+async function loadGroupDetail(gid) {
+  activeGroupId = gid;
+  showPage('gd');
+  const list = groups();
+  const g = list.find(g => g.id === gid);
+  if (!g) { loadGroups(); return; }
+  const inIt = g.members.includes(ME.id);
+  document.getElementById('gd-title').textContent = g.name;
+  document.getElementById('gd-sub').textContent   = g.members.length + ' member' + (g.members.length !== 1 ? 's' : '') + (g.description ? ' · ' + g.description : '');
+  const jb = document.getElementById('btn-gd-join');
+  jb.textContent = inIt ? 'Leave' : 'Join';
+  jb.className   = inIt ? 'vt-btn' : 'vt-btn on';
+  jb.onclick = () => {
+    const nowIn = toggleGroup(gid);
+    toast(nowIn ? 'Joined group!' : 'Left group');
+    loadGroupDetail(gid);
+  };
+  document.getElementById('btn-gd-members').onclick = () => openMembers(gid);
+  const gPhotos = photos().filter(p => p.groupId === gid).sort((a,b) => b.timestamp - a.timestamp);
+  await renderPhotoGrid(document.getElementById('gd-grid'), gPhotos);
+}
+
+/* ══════════════════════════════════════════════
+   PHOTO MODAL
+══════════════════════════════════════════════ */
+let currentPhotoId = null;
+
+async function openPhoto(pid) {
+  currentPhotoId = pid;
+  const p = photos().find(p => p.id === pid);
+  if (!p) return;
+  let imgData;
+  try { imgData = await IDB.get(pid); } catch(e) { return; }
+  document.getElementById('pm-img').src = imgData || '';
+  document.getElementById('pm-who').textContent = '@' + p.username;
+  document.getElementById('pm-cap').textContent = p.caption || '';
+  document.getElementById('pm-cam').innerHTML  = p.camera   ? `<b>Camera</b> ${esc(p.camera)}`   : '';
+  document.getElementById('pm-loc').innerHTML  = p.location ? `<b>Location</b> ${esc(p.location)}` : '';
+  document.getElementById('pm-date').innerHTML = `<b>Posted</b> ${new Date(p.timestamp).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}`;
+  refreshLikeBtn();
+  openModal('modal-photo');
+}
+
+function refreshLikeBtn() {
+  const p = photos().find(p => p.id === currentPhotoId);
+  if (!p || !ME) return;
+  refreshMe();
+  const liked = p.likes.includes(ME.id);
+  const btn = document.getElementById('pm-like');
+  btn.textContent = liked ? '♥ Liked' : '♡ Like';
+  btn.classList.toggle('liked', liked);
+  document.getElementById('pm-lct').textContent = p.likes.length + ' like' + (p.likes.length !== 1 ? 's' : '');
+}
+
+document.getElementById('pm-like').addEventListener('click', () => {
+  if (!currentPhotoId) return;
+  toggleLike(currentPhotoId);
+  refreshLikeBtn();
+});
+
+/* ══════════════════════════════════════════════
+   UPLOAD MODAL
+══════════════════════════════════════════════ */
+function openUpload() {
+  pendingImgData = null;
+  document.getElementById('prev-inner').innerHTML = `
+    <div class="preview-zone-ph" id="prev-ph">
+      <span>◎</span><small>Select an image</small>
+    </div>`;
+  document.getElementById('u-cap').value = '';
+  document.getElementById('u-cam').value = '';
+  document.getElementById('u-loc').value = '';
+  document.getElementById('u-file').value = '';
+  document.getElementById('u-cam-file').value = '';
+  // populate groups
+  const sel = document.getElementById('u-grp');
+  sel.innerHTML = '<option value="">— Global Feed Only —</option>';
+  groups().forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.id; o.textContent = g.name;
+    sel.appendChild(o);
+  });
+  openModal('modal-upload');
+}
+
+async function handleFileSelect(file) {
+  if (!file) return;
+  toast('Compressing image…');
+  const data = await compress(file);
+  if (!data) { toast('Could not read image'); return; }
+  pendingImgData = data;
+  document.getElementById('prev-inner').innerHTML = `<img src="${data}" alt="preview" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">`;
+}
+
+document.getElementById('u-file').addEventListener('change', function() { handleFileSelect(this.files[0]); });
+document.getElementById('u-cam-file').addEventListener('change', function() { handleFileSelect(this.files[0]); });
+
+document.getElementById('btn-publish').addEventListener('click', async () => {
+  if (!pendingImgData) { toast('Please select an image first'); return; }
+  document.getElementById('btn-publish').textContent = 'Publishing…';
+  try {
+    await publishPhoto({
+      caption:  document.getElementById('u-cap').value.trim(),
+      camera:   document.getElementById('u-cam').value.trim(),
+      location: document.getElementById('u-loc').value.trim(),
+      groupId:  document.getElementById('u-grp').value || null,
+    });
+    closeModal('modal-upload');
+    pendingImgData = null;
+    toast('Published! ✓');
+    loadFeed();
+  } catch(e) {
+    toast(e.message);
+  } finally {
+    document.getElementById('btn-publish').textContent = 'Publish';
+  }
+});
+
+/* ══════════════════════════════════════════════
+   GROUP MODAL
+══════════════════════════════════════════════ */
+document.getElementById('btn-new-group').addEventListener('click', () => openModal('modal-group'));
+
+document.getElementById('btn-create-group').addEventListener('click', () => {
+  const name = document.getElementById('g-name').value.trim();
+  if (!name) { toast('Please enter a group name'); return; }
+  makeGroup(name, document.getElementById('g-desc').value.trim());
+  document.getElementById('g-name').value = '';
+  document.getElementById('g-desc').value = '';
+  closeModal('modal-group');
+  toast('Group created!');
+  loadGroups();
+});
+
+/* ══════════════════════════════════════════════
+   MEMBERS MODAL
+══════════════════════════════════════════════ */
+function openMembers(gid) {
+  const g = groups().find(g => g.id === gid);
+  const ul = users();
+  const ml = document.getElementById('mem-list');
+  ml.innerHTML = '';
+  g.members.forEach(mid => {
+    const u = ul.find(u => u.id === mid);
+    if (!u) return;
+    const isCreator = g.creatorId === mid;
+    const isMe = ME.id === g.creatorId && mid !== ME.id;
+    const row = document.createElement('div');
+    row.className = 'mem-row';
+    row.innerHTML = `
+      <div class="mem-name">
+        @${esc(u.username)}
+        ${isCreator ? '<span class="mem-tag">Creator</span>' : ''}
+      </div>
+      ${isMe ? `<button class="mem-remove" data-uid="${mid}">Remove</button>` : ''}`;
+    if (isMe) {
+      row.querySelector('.mem-remove').addEventListener('click', () => {
+        const gl = groups();
+        const gg = gl.find(g => g.id === gid);
+        gg.members = gg.members.filter(m => m !== mid);
+        saveGroups(gl);
+        toast('@' + u.username + ' removed');
+        openMembers(gid);
+        loadGroupDetail(gid);
+      });
+    }
+    ml.appendChild(row);
+  });
+  document.getElementById('invite-input').value = '';
+  document.getElementById('btn-invite').onclick = () => {
+    try {
+      inviteUser(gid, document.getElementById('invite-input').value);
+      document.getElementById('invite-input').value = '';
+      toast('Member added!');
+      openMembers(gid);
+      loadGroupDetail(gid);
+    } catch(e) { toast(e.message); }
+  };
+  openModal('modal-members');
+}
+
+/* ══════════════════════════════════════════════
+   MODAL HELPERS
+══════════════════════════════════════════════ */
+function openModal(id) { document.getElementById(id).classList.add('on'); }
+function closeModal(id) { document.getElementById(id).classList.remove('on'); }
+
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => closeModal(btn.dataset.close));
+});
+
+['modal-photo','modal-upload','modal-group','modal-members'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) closeModal(id);
+  });
+});
+
+/* ══════════════════════════════════════════════
+   MENU
+══════════════════════════════════════════════ */
+function openMenu()  { document.body.classList.add('menu-open'); }
+function closeMenu() { document.body.classList.remove('menu-open'); }
+
+document.getElementById('ham').addEventListener('click', openMenu);
+document.getElementById('menu-close').addEventListener('click', closeMenu);
+document.getElementById('menu-overlay').addEventListener('click', closeMenu);
+document.getElementById('menu-signout').addEventListener('click', doSignOut);
+
+document.querySelectorAll('.menu-item[data-nav]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const v = btn.dataset.nav;
+    if      (v === 'feed')     loadFeed();
+    else if (v === 'trending') loadTrending();
+    else if (v === 'groups')   loadGroups();
+    else if (v === 'profile')  loadProfile();
+  });
+});
+
+/* ══════════════════════════════════════════════
+   DARK MODE
+══════════════════════════════════════════════ */
+const darkBtn = document.getElementById('dark-toggle');
+let isDark = LS.get('gn_dark') || false;
+function applyDark(v) {
+  isDark = v;
+  document.documentElement.toggleAttribute('data-dark', v);
+  LS.set('gn_dark', v);
+}
+applyDark(isDark);
+darkBtn.addEventListener('click', () => applyDark(!isDark));
+
+/* ══════════════════════════════════════════════
+   VIEW TOGGLE (grid / list)
+══════════════════════════════════════════════ */
+document.querySelectorAll('.vt-btn[data-layout]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    feedLayout = btn.dataset.layout;
+    document.querySelectorAll('.vt-btn[data-layout]').forEach(b => b.classList.toggle('on', b.dataset.layout === feedLayout));
+    const grid = document.getElementById('feed-grid');
+    grid.classList.toggle('list-mode', feedLayout === 'list');
+  });
+});
+
+/* ══════════════════════════════════════════════
+   PROFILE TABS
+══════════════════════════════════════════════ */
+document.querySelectorAll('.ptab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    profTab = btn.dataset.pt;
+    document.querySelectorAll('.ptab').forEach(b => b.classList.toggle('on', b.dataset.pt === profTab));
+    loadProfile();
+  });
+});
+
+/* ══════════════════════════════════════════════
+   BACK LINKS
+══════════════════════════════════════════════ */
+document.getElementById('btn-back').addEventListener('click', loadGroups);
+
+/* ══════════════════════════════════════════════
+   NAV LOGO + POST BTN
+══════════════════════════════════════════════ */
+document.getElementById('logo').addEventListener('click', () => { if (ME) loadFeed(); });
+document.getElementById('post-btn').addEventListener('click', openUpload);
+
+/* ══════════════════════════════════════════════
+   AUTH FORM INTERACTIONS
+══════════════════════════════════════════════ */
+// tab toggle
+document.getElementById('tab-in').addEventListener('click', () => {
+  document.getElementById('tab-in').classList.add('on');
+  document.getElementById('tab-up').classList.remove('on');
+  document.getElementById('form-in').classList.add('on');
+  document.getElementById('form-up').classList.remove('on');
+});
+document.getElementById('tab-up').addEventListener('click', () => {
+  document.getElementById('tab-up').classList.add('on');
+  document.getElementById('tab-in').classList.remove('on');
+  document.getElementById('form-up').classList.add('on');
+  document.getElementById('form-in').classList.remove('on');
+});
+
+function showErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideErr(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+document.getElementById('btn-login').addEventListener('click', () => {
+  hideErr('in-err');
+  try {
+    doLogin(
+      document.getElementById('in-user').value,
+      document.getElementById('in-pass').value
+    );
+    enterApp();
+  } catch(e) { showErr('in-err', e.message); }
+});
+
+document.getElementById('btn-reg').addEventListener('click', () => {
+  hideErr('up-err');
+  try {
+    doRegister(
+      document.getElementById('up-user').value,
+      document.getElementById('up-pass').value
+    );
+    enterApp();
+  } catch(e) { showErr('up-err', e.message); }
+});
+
+// Enter key
+['in-user','in-pass'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-login').click();
+  })
+);
+['up-user','up-pass'].forEach(id =>
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-reg').click();
+  })
+);
+
+/* ══════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════ */
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+/* ══════════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════════ */
+async function boot() {
+  try {
+    await IDB.open();
+  } catch(e) {
+    console.warn('IndexedDB failed, app may not store images:', e);
+  }
+
+  // check session
+  const sid = LS.get('gn_session');
+  if (sid) {
+    const u = users().find(u => u.id === sid);
+    if (u) {
+      ME = u;
+      enterApp();
+      return;
+    }
+  }
+  // show auth
+  showAuth();
+}
+
+boot();
+</script>
+</body>
+</html>
